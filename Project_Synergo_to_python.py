@@ -111,7 +111,7 @@ sxeseis = {}
 ##          "Concept arrow added": User changes the destination of a relationship
 ##          "Concept link added": User changes the root of a relationship
 ##          "Delete object": User deletes an object. Can be an element or a relationship
-##          "Delete object"s: User deletes many objects at once
+##          "Delete objects": User deletes many objects at once
 ##
 ##      The <attribute> element describes the targets of each event.
 ##          Example in the case of a "Insert Concept Relationship"
