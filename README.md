@@ -3,5 +3,5 @@
 
 Purpose:
 -----------------------------------------------
-1. [Ease](): Convert blah to blah blah
-2. Xaxa
+1. [Ease](): Converting any complex flowchart to python code.
+2. Help educators to check more efficiently for errors.
