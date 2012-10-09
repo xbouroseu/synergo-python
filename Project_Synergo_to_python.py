@@ -13,8 +13,10 @@ import shutil
 ## - Parse the content of the history.xml file using the xml.etree module
 
 pr_name = raw_input("Give filename: ")
+synergo_file_name = pr_name
 
-synergo_file_name = pr_name + ".synergo"
+if(".synergo" not in pr_name):
+    synergo_file_name = pr_name + ".synergo"
 
 temp_path = tempfile.mkdtemp()
 copy_zip = temp_path + "/" + pr_name + ".zip"
@@ -135,7 +137,10 @@ def get_id(string):
         return int(get_cont(string,"(",")"))
 
 def is_note(str):
-    return str.find("note")>-1;
+    return str.find("note")>-1
+
+def is_text(str):
+    return str.find("text_")>-1
 
 for i in events:
     action = i.findtext("action")
@@ -185,17 +190,17 @@ for i in events:
         sxeseis[new_root][con_id] = connectors[con_id][1]
         connectors[con_id][0] = new_root               
     elif action == "Delete objects":
-        el_id = get_id(atr[0])
         conn_ids = []
         els = []
 
         for x in range(len(atr)):
             obj = atr[x]
             is_conn = atr[x].find("qualitative") > -1
+            is_t = is_text(atr[x])
             is_n = is_note(atr[x])
             if is_conn:
                 conn_ids.append(get_id(atr[x]))
-            elif not is_n:
+            elif not (is_n or is_t):
                 els.append(get_id(atr[x]))
             
         for x in conn_ids:
@@ -221,9 +226,10 @@ for i in events:
     elif action == "Delete object":
         is_con = atr[0].find("qualitative")
         is_n = is_note(atr[0])
-        id = get_id(atr[0])
+        is_t = is_text(atr[0])
 
-        if not is_n:
+        if not (is_n or is_t):
+            id = get_id(atr[0])
             if is_con > -1:
                 el = connectors[id][0]
                 del connectors[id]
@@ -306,6 +312,9 @@ for x in Elements:
         first_el.append(x);
 
 if len(first_el)>1:
+    if Elements[first_el[0]]["kind"] != "Start-End":
+        raise StructureError(3,["Starting"])
+    
     str_first_el = [str(x) for x in first_el]
     raise StructureError(1,["starting",",".join(str_first_el)])
 elif len(first_el)==0:
@@ -322,12 +331,17 @@ if Elements[first_el]["kind"] != "Start-End":
 last_el = [x for x in Elements if x not in sxeseis]
 
 if len(last_el)>1:
+    if Elements[last_el[0]]["kind"] != "Start-End":
+        raise StructureError(3,["Ending"])
     str_last_el = [str(x) for x in last_el]
     raise StructureError(1,["ending",",".join(str_last_el)])
 elif len(last_el)==0:
     raise StructureError(0,["ending"])
 
 last_el = last_el[0]
+
+## Add this to avoid confusion in further functions
+Elements[last_el]["To"] = last_el;
 
 if Elements[last_el]["kind"] != "Start-End":
     raise StructureError(3,["Ending"])
@@ -339,6 +353,8 @@ for x in Elements:
     if Elements[x]["kind"]!="Decision" and x in sxeseis and len(sxeseis[x]) > 1:
         raise StructureError(4,[x]);
 
+
+## previous,key_of,_print : Unused until now
 def previous(index):
     roots = []
 
@@ -356,6 +372,7 @@ def key_of(value,dic):
 def _print(obj):
     for x in obj:
         print x," : ",obj[x]
+##
 
 ## gen_skip : Function(index)
 ##     where index argument is the Element Id
@@ -364,7 +381,7 @@ def _print(obj):
 ##     It goes through all the elements after the element given
 ##     until it finds a decision element where it stops
 ##
-##     It returns a list with all the elements passed (trace)
+##     It returns a list with all the elements passed through (trace)
         
 def gen_skip(index):
     el = Elements[index]
@@ -385,7 +402,7 @@ def gen_skip(index):
 
 ## been : Structure consisting of {key:value} pairs
 ##     where key = [The Decision Element Id]
-##     and value = True: [If element has been marked before]
+##     and value = True: [If element has been marked(met) before]
 ##                 False: [If not ^^]
 ##
 ## levels : Structure consisting of {key:value} pairs
@@ -556,6 +573,10 @@ for x in final_decisions:
 ## Functionality:
 ##     Builds the corresponding text between the [start] and the [end]
 ##     elements and adds it to the Global [Text] variable
+##
+## Note:
+##      If you un-comment the comments inside you will see the debug
+##      process which prints every information passed through.
 
 current = first_el
 
