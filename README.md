@@ -8,7 +8,7 @@
 ### Requirements
 - Python3
 
-#### Copy-paste into terminal
+#### Clone repository
 ```sh
 git clone https://github.com/xbouroseu/synergo-python.git
 cd synergo-python
