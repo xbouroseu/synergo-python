@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
-import xml.etree.ElementTree
+#!/usr/bin/env python3
+
+import xml.etree.ElementTree as ET
 import zipfile
 import os
 import tempfile
 import shutil
+import sys
 
 ## - Ask for the synergo file name
 ## - Create a temporary directory where we will store the copied files
@@ -12,35 +15,52 @@ import shutil
 ##   in the .zip file described above
 ## - Parse the content of the history.xml file using the xml.etree module
 
-pr_name = raw_input("Give filename: ")
-synergo_file_name = pr_name
+Args = sys.argv
+input_filename = Args[1]
+output_file_basename = Args[2] if len(Args)>2 else ".".join(input_filename.split(".")[:-1])
+use_temp = Args[3] if len(Args)>3 else True
 
-if(".synergo" not in pr_name):
-    synergo_file_name = pr_name + ".synergo"
+def open_synergo_xml(filename:str, use_temp:bool = True) -> str:
+    temp_path = ""
+    if use_temp:
+        temp_path = tempfile.mkdtemp()
+    else:
+        if "tmp00" not in os.listdir("./"):
+            os.mkdir("tmp00")
+        temp_path = "tmp00"
+        
+    print("Temp_path:", temp_path)
+    copy_zip = temp_path + "/" + filename + ".zip"
 
-temp_path = tempfile.mkdtemp()
-copy_zip = temp_path + "/" + pr_name + ".zip"
+    # Make copy in .zip format and place it in the temporary directory
+    shutil.copy2(filename, copy_zip)
 
-# Make copy in .zip format and place it in the temporary directory
-shutil.copy2(synergo_file_name,copy_zip)
+    # Extract contents of history.xml file in the temporary directory
+    zip_f = zipfile.ZipFile(copy_zip, "r")
+    zip_contents_filenames = zip_f.namelist()
+    # print(zip_contents_filenames)
 
-# Extract contents of history.xml file in the temporary directory
-zip_f = zipfile.ZipFile(copy_zip,"r")
-xml_name = [x for x in zip_f.namelist() if x[-3:]=="xml"][0]
-zip_f.extract(xml_name,temp_path)
+    xml_filename = [x for x in zip_contents_filenames if x.split(".")[-2]=="xml"][0]
+    zip_f.extract(xml_filename, temp_path)
+    zip_f.close()
+    xml_file_temppath = temp_path + "/" + xml_filename
 
-history_xml = open(temp_path +"/" + xml_name,"r")
-xml_file = xml.etree.ElementTree.parse(history_xml)
-history_xml.close()
-zip_f.close()
+    xml_fileIO = open(xml_file_temppath, "r", encoding="utf16")
+    xml_file_text = xml_fileIO.read()
+    xml_fileIO.close()
+    
+    # print(xml_file_text)
+    xml_file_parsed = ET.fromstring(xml_file_text)
 
-## - Remove the contents of the temporary directory so it can be deleted
-## - Delete the temporary directory
-os.unlink(copy_zip)
-os.unlink(temp_path + "/" + xml_name)
-os.rmdir(temp_path)
+    ## - Remove the contents of the temporary directory so it can be deleted
+    ## - Delete the temporary directory
+    os.unlink(copy_zip)
+    os.unlink(xml_file_temppath)
+    os.rmdir(temp_path)  
+    
+    return xml_file_parsed
 
-doc = xml_file
+doc = open_synergo_xml(input_filename)
 
 ## affirmative : list containing all the possible
 ##               [Yes-Like] inputs the user can give
@@ -246,7 +266,8 @@ for i in events:
 Errors = ["There is no {0} element.","There are more than 1 {0} elements.\nId's: {1}",\
           "Decision ({0}) misses a Yes/No connection.","{0} Element is of not type 'Start-End'",\
           "Element ({0}) is connected to more than 1 Elements but is not of type 'Decision'."]
-class StructureError:
+
+class StructureError(BaseException):
     global Errors
     def __init__(self,erid,obj):
         self.er_id = erid
@@ -294,7 +315,7 @@ for x in sxeseis:
             else:
                 el["To"]["No"] = r[y]
     else:
-        el["To"] = r.values()[0]
+        el["To"] = list(r.values())[0]
 ##================================================##
 
 ## - Find first element ##
@@ -371,7 +392,7 @@ def key_of(value,dic):
 
 def _print(obj):
     for x in obj:
-        print x," : ",obj[x]
+        print(x," : ",obj[x])
 ##
 
 ## gen_skip : Function(index)
@@ -626,14 +647,14 @@ def build(start,end,level):
 ## and ending element the last element, so it will pass through all
 ## the elements and build the final Text
 
-build(first_el,last_el,0)
+build(first_el, last_el, 0)
 
 ## - Create the final file
-## - Add the final text
-## - Rename to python extension
+ret = open( output_file_basename + ".txt", "w", encoding="utf-8")
 
-ret = open(pr_name + ".txt","w")
+## - Add the final text
 ret.write(Text)
 ret.close()
 
-os.rename(pr_name + ".txt",pr_name + ".py")
+## - Rename to python extension
+os.rename(output_file_basename + ".txt", output_file_basename + ".py")
