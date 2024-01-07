@@ -5,11 +5,19 @@
 2. Helps educators to check more efficiently for errors.
 
 ## Installation & Usage:
-### Linux
+### Requirements
+- Python3
+
+#### Copy-paste into terminal
 ```sh
-$ git clone https://github.com/xbouroseu/synergo-python.git &&  cd synergo-python
+git clone https://github.com/xbouroseu/synergo-python.git
+cd synergo-python
 ```
 
+### Usage
+Download Synergo software [here](https://synergo.software.informer.com/download/).
+
+#### Run
 ``` sh
--Follow CLI instructions..-
+python convert.py input_file_name [output_file_basename]
 ```
