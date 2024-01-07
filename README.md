@@ -17,7 +17,7 @@ cd synergo-python
 ### Usage
 Download Synergo software [here](https://synergo.software.informer.com/download/).
 
-#### Run
+#### Run conversion on `input_file_name` and produce `output_file_basename.py` if provided or else `input_file_name.py`
 ``` sh
 python convert.py input_file_name [output_file_basename]
 ```
