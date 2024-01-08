@@ -35,12 +35,12 @@ y = int(input("Give y: "))
 z = int(input("Give z: "))
 w = 0
 if x>0:
-  w = x + y + z
-	if w > 20:
-		w = 2*w + 1
-	else:
-		w = w*w
+    w = x + y + z
+    if w > 20:
+        w = 2*w + 1
+    else:
+        w = w*w
 else:
-	w = x - y - z
+    w = x - y - z
 print("W: ", w)
 ```
