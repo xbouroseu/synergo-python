@@ -383,7 +383,7 @@ def previous(index):
 
     for x in Elements:
         if Elements[x]["To"] == index:
-            root.append(x)
+            roots.append(x)
 
     return roots
 
