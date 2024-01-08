@@ -6,6 +6,7 @@ import os
 import tempfile
 import shutil
 import sys
+import re
 from pathlib import Path, PurePath
 
 # - Get the synergo file path
@@ -43,7 +44,7 @@ def open_synergo_xml(filepath:str, use_temp:bool = True) -> str:
     # Extract contents of history.xml file in the temporary directory
     zip_f = zipfile.ZipFile(zip_copy_path, "r")
     zip_contents_filenames = zip_f.namelist()
-    xml_filename = [x for x in zip_contents_filenames if x.split(".")[-2]=="xml"][0]
+    xml_filename = [x for x in zip_contents_filenames if "xml" in x.split(".")][0]
     zip_f.extract(xml_filename, temp_path)
     zip_f.close()
     
@@ -64,6 +65,23 @@ def open_synergo_xml(filepath:str, use_temp:bool = True) -> str:
 
 doc = open_synergo_xml(input_file_path)
 
+## Errors Interface
+class StructureError(BaseException):
+    Errors = [
+        "There is no {0} element.",
+        "There are more than 1 {0} elements.\nId's: {1}",
+        "Decision ({0}) misses a Yes/No connection.",
+        "{0} Element is of not type 'Start-End'",
+        "Element ({0}) is connected to more than 1 Elements but is not of type 'Decision'."
+    ]
+    
+    def __init__(self,erid, obj):
+        self.er_id = erid
+        self.format = obj
+
+    def __str__(self):
+        return self.Errors[self.er_id].format(*self.format)
+    
 ## affirmative : list containing all the possible
 ##               [Yes-Like] inputs the user can give
 ##
@@ -129,8 +147,7 @@ sxeseis = {}
 ##      The <action> element takes one of these values:
 ##          "Insert Entity": User inserts an object
 ##          "Change Concept Entity Text": User changes the content of a given element
-##          "Insert Concept Relationship": User connects two given elements with
-##                         a relationship which has a start(root) and an end(destination)
+##          "Insert Concept Relationship": User connects two given elements with a relationship which has a start(root) and an end(destination)
 ##          "Change Concept Relation text": User changes the text of a relationship between elements
 ##          "Concept arrow added": User changes the destination of a relationship
 ##          "Concept link added": User changes the root of a relationship
@@ -156,7 +173,7 @@ def get_cont(string,a,b):
     return string[in_a+1:in_b]
 
 def get_id(string):
-        return int(get_cont(string,"(",")"))
+    return int(get_cont(string,"(",")"))
 
 def is_note(str):
     return str.find("note")>-1
@@ -164,17 +181,30 @@ def is_note(str):
 def is_text(str):
     return str.find("text_")>-1
 
+def get_attr_elid(attr_str):
+    regx = re.compile(r'\((\d+)\)')
+    findall = regx.findall(attr_str)
+    
+    return findall[0]
+
+def get_attr_text(attr_str):
+    start_index = re.search(r',\s', attr_str).end()
+    end_index = re.search(r',\s(\(x=\d+,y=\d+,w=\d+,h=\d+\)\]$)', attr_str).start()
+    
+    return attr_str[start_index:end_index]
+
 for i in events:
     action = i.findtext("action")
-    atr = i.findtext("attribute").strip("[]").rsplit(",")
-
+    attr_str = i.findtext("attribute")
+    atr = attr_str.strip("[]").rsplit(",")
+     
     if action == "Insert Entity":
         kind = atr[0]
         idd = int(atr[len(atr)-1].lstrip())
         elements[idd] = [idd,kind] 
     elif action == "Change Concept Entity text":
         idd = int(get_cont(atr[0],"(",")"))
-        contents[idd] = atr[1].lstrip()       
+        contents[idd] = get_attr_text(attr_str)  
     elif action == "Change Concept Relationship text":
         connector_id = get_id(atr[0])
         text = atr[1].lstrip()
@@ -264,20 +294,6 @@ for i in events:
                     del sxeseis[id]
                 del elements[id]
 
-## Errors Interface
-Errors = ["There is no {0} element.","There are more than 1 {0} elements.\nId's: {1}",\
-          "Decision ({0}) misses a Yes/No connection.","{0} Element is of not type 'Start-End'",\
-          "Element ({0}) is connected to more than 1 Elements but is not of type 'Decision'."]
-
-class StructureError(BaseException):
-    global Errors
-    def __init__(self,erid,obj):
-        self.er_id = erid
-        self.format = obj
-
-    def __str__(self):
-        return Errors[self.er_id].format(*self.format)
-
 Elements = {}
 for x in elements:
     if x in contents:
@@ -293,6 +309,9 @@ for x in elements:
     Elements[x]["kind"] = el[1]
     Elements[x]["text"] = el[2]
     Elements[x]["To"] = []
+    
+# for x, y in Elements.items():
+#     print(x, y)
 ##===========================================##
 
 ## - Append the next element to the 'To'
@@ -632,11 +651,12 @@ def build(start,end,level):
                     Text += indent(level) + "else:\n"
                     #print indent(level+1)," No-> ", el["To"]["No"]
                     build(no,meet,level+1)
-                Text += "\n"
+                # Text += "\n"
                 #print indent(level)," Decision-> ", meet
                 build(meet,end,level)
             elif kind!="Connector":
-                Text += indent(level) + el["text"] + "\n"
+                for x in el["text"].split("\n"):
+                    Text += indent(level) + x + "\n"
                 #print indent(level)," Element-> ", el["To"]
                 build(el["To"],end,level)
             else:
@@ -651,12 +671,7 @@ def build(start,end,level):
 
 build(first_el, last_el, 0)
 
-## - Create the final file
-ret = open( output_file_basename + ".txt", "w", encoding="utf-8")
-
-## - Add the final text
+## - Create the final file and add the final text
+ret = open( output_file_basename + ".py", "w", encoding="utf-8")
 ret.write(Text)
 ret.close()
-
-## - Rename to python extension
-os.rename(output_file_basename + ".txt", output_file_basename + ".py")

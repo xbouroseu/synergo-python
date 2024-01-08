@@ -1,2 +1,4 @@
 *.model
-*.synergo
+# *.synergo
+
+*.ipynb
