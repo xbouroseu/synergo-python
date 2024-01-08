@@ -1,26 +1,28 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/env python3
-
 import xml.etree.ElementTree as ET
 import zipfile
 import os
 import tempfile
 import shutil
 import sys
+from pathlib import Path, PurePath
 
-## - Ask for the synergo file name
-## - Create a temporary directory where we will store the copied files
-## - Create a copy in .zip format
-## - Extract the contents of the history.xml
-##   in the .zip file described above
-## - Parse the content of the history.xml file using the xml.etree module
+# - Get the synergo file path
+# - Create a temporary directory where we will store the copied files
+# - Create a copy in .zip format
+# - Extract the contents of the zip file and read the contents of the history.xml file
+# - Parse the content of the history.xml file using the xml.etree module
+# TODO support for do-while
 
 Args = sys.argv
-input_filename = Args[1]
-output_file_basename = Args[2] if len(Args)>2 else ".".join(input_filename.split(".")[:-1])
+input_file_path = Args[1]
+input_file_name = Path(input_file_path).parts[-1]
+output_file_basename = Args[2] if len(Args)>2 else ".".join(input_file_name.split(".")[:-1])
 use_temp = Args[3] if len(Args)>3 else True
 
-def open_synergo_xml(filename:str, use_temp:bool = True) -> str:
+def open_synergo_xml(filepath:str, use_temp:bool = True) -> str:
+    # Create the temp path
     temp_path = ""
     if use_temp:
         temp_path = tempfile.mkdtemp()
@@ -30,37 +32,37 @@ def open_synergo_xml(filename:str, use_temp:bool = True) -> str:
         temp_path = "tmp00"
         
     print("Temp_path:", temp_path)
-    copy_zip = temp_path + "/" + filename + ".zip"
-
+    
+    file_Path = Path(filepath)
+    filename = file_Path.parts[-1]
+    
     # Make copy in .zip format and place it in the temporary directory
-    shutil.copy2(filename, copy_zip)
+    zip_copy_path = PurePath(temp_path).joinpath(filename + ".zip")
+    shutil.copy2(filepath, zip_copy_path)
 
     # Extract contents of history.xml file in the temporary directory
-    zip_f = zipfile.ZipFile(copy_zip, "r")
+    zip_f = zipfile.ZipFile(zip_copy_path, "r")
     zip_contents_filenames = zip_f.namelist()
-    # print(zip_contents_filenames)
-
     xml_filename = [x for x in zip_contents_filenames if x.split(".")[-2]=="xml"][0]
     zip_f.extract(xml_filename, temp_path)
     zip_f.close()
-    xml_file_temppath = temp_path + "/" + xml_filename
-
+    
+    # Read xml file contents
+    xml_file_temppath = PurePath(temp_path).joinpath(xml_filename)
     xml_fileIO = open(xml_file_temppath, "r", encoding="utf16")
     xml_file_text = xml_fileIO.read()
     xml_fileIO.close()
-    
-    # print(xml_file_text)
     xml_file_parsed = ET.fromstring(xml_file_text)
 
     ## - Remove the contents of the temporary directory so it can be deleted
     ## - Delete the temporary directory
-    os.unlink(copy_zip)
+    os.unlink(zip_copy_path)
     os.unlink(xml_file_temppath)
     os.rmdir(temp_path)  
     
     return xml_file_parsed
 
-doc = open_synergo_xml(input_filename)
+doc = open_synergo_xml(input_file_path)
 
 ## affirmative : list containing all the possible
 ##               [Yes-Like] inputs the user can give
