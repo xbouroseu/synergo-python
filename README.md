@@ -6,20 +6,19 @@
 
 ## Installation & Usage:
 ### Requirements
-- Windows
 - Python3
 
-#### Clone repository
+#### 1. (Optional) Download Synergo client
+Download Synergo client software [here](https://synergo.software.informer.com/download/).
+Synergo works properly only in **Windows** currently. There are example models included here which you can open and modify.
+
+#### 2. Clone repository
 ```sh
 git clone https://github.com/xbouroseu/synergo-python.git
 cd synergo-python
 ```
 
-### Usage
-Download Synergo software [here](https://synergo.software.informer.com/download/).
-Synergo works properly only in Windows currently. There are example models included here which you can open and modify.
-
-#### Run conversion on `input_file_path` and produce `output_file_basename.py` if provided or else `input_file_basename.py`
+#### 3. Run conversion on `input_file_path` and produce `output_file_basename.py` if provided or else `input_file_basename.py`
 ``` sh
 py convert.py input_file_path [output_file_basename]
 ```
