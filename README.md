@@ -18,7 +18,7 @@ git clone https://github.com/xbouroseu/synergo-python.git
 cd synergo-python
 ```
 
-#### 3. Run conversion on `input_file_path` and produce `output_file_basename.py` if provided or else `input_file_basename.py`
+#### 3. Run conversion on `input_file_path` and produce `./output_file_basename.py` if provided or else `./input_file_basename.py`
 ``` sh
 py convert.py input_file_path [output_file_basename]
 ```
