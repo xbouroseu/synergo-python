@@ -11,7 +11,7 @@
 
 #### 1. (Optional) Download Synergo client
 Download Synergo client software [here](https://synergo.software.informer.com/download/).
-Synergo works properly only in **Windows** currently. There are example models included here which you can open and modify.
+Synergo currently works properly only in **Windows**. There are example models included here which you can open and modify.
 
 #### 2. Clone repository
 ```sh
