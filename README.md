@@ -21,7 +21,7 @@ cd synergo-python
 
 #### 3. Run conversion on `input_file_path` and produce `./output_file_basename.py` if provided or else `./input_file_basename.py`
 ``` sh
-py convert.py input_file_path [output_file_basename]
+python convert.py input_file_path [output_file_basename]
 ```
 ### Example
 Running for `examples/model2.synergo` which looks like this:
