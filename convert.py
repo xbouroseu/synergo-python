@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/env python3
+# Copyright 2011
+
 import xml.etree.ElementTree as ET
 import zipfile
 import os
