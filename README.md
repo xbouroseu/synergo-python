@@ -1,6 +1,7 @@
-# [Synergo2Python]() - Convert Synergo algorithmic flowcharts to Python code
+# Synergo2Python
+## Convert Synergo algorithmic flowcharts to Python code
 
-## Purpose:
+### Purpose:
 1. Easily convert any complex flowchart to python code.
 2. Helps educators to check more efficiently for errors.
 
